@@ -14,13 +14,15 @@ class GameClient:
     def __init__(self):
 
         self.WIDTH = 500
+        self.SPACER = 50
+        self.WIN_WIDTH = self.WIDTH * 2 + self.SPACER
         self.HEIGHT = 600
         self.ROWS = 10
         self.COLUMNS = self.ROWS
 
         self.pygame = pygame
         self.pygame.init()
-        self.win = self.pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+        self.win = self.pygame.display.set_mode((self.WIN_WIDTH, self.HEIGHT))
         self.win.fill(WHITE)
 
         self.ships = [
@@ -55,6 +57,7 @@ class GameClient:
         x = 0
         y = 0
         x_pos = 0
+
         for i in range(self.ROWS):
             x = i * cell_width
 
@@ -67,6 +70,17 @@ class GameClient:
 
             text = self.END_FONT.render(f'({x_pos};{i})', False, GRAY)
             self.win.blit(text, (x, self.HEIGHT - self.WIDTH))
+
+        for i in range(self.ROWS):
+            x = i * cell_width
+
+            self.pygame.draw.line(self.win, GRAY,
+                                  (x + self.WIDTH + self.SPACER, self.HEIGHT - self.WIDTH),
+                                  (x + self.WIDTH + self.SPACER, self.HEIGHT), 3)  # вертикальные линии
+            self.pygame.draw.line(self.win, GRAY,
+                                  (0 + self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH),
+                                  (self.WIDTH + self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH),
+                                  3)  # горизонтальные
 
     def draw_cells(self):
         for x, col in enumerate(self.game_field):
@@ -96,23 +110,24 @@ class GameClient:
         self.color_cell(x, y)
 
     def color_cell(self, x, y):
-        # {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
-        if self.game_stage == self.game_stages[0]:
-            for ship in self.ships:
-                for coord in ship['coords']:
-                    if coord['x'] is None:
-                        adding_new_ship = self.is_current_ship_new()
-                        if adding_new_ship: print('this ship is new')
-                        print(f'_____{x},{y}_____')
-                        if not self.have_neighbors(x, y,
-                                                   only_diagonal=not adding_new_ship):
-                            self.game_field[x][y]['colored'] = True
-                            coord['x'] = x
-                            coord['y'] = y
-                            # pprint(self.get_all_ships())
-                            return
-                        else:
-                            return
+        if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
+            # {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
+            if self.game_stage == self.game_stages[0]:
+                for ship in self.ships:
+                    for coord in ship['coords']:
+                        if coord['x'] is None:
+                            adding_new_ship = self.is_current_ship_new()
+                            if adding_new_ship: print('this ship is new')
+                            print(f'_____{x},{y}_____')
+                            if not self.have_neighbors(x, y,
+                                                       only_diagonal=not adding_new_ship):
+                                self.game_field[x][y]['colored'] = True
+                                coord['x'] = x
+                                coord['y'] = y
+                                # pprint(self.get_all_ships())
+                                return
+                            else:
+                                return
 
     def get_all_ships(self):
         ships = []
