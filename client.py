@@ -23,19 +23,26 @@ class GameClient:
         self.win = self.pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.win.fill(WHITE)
 
-        self.ships = {
-            1: {'amount': 4, 'placed': 0},
-            2: {'amount': 3, 'placed': 0},
-            3: {'amount': 2, 'placed': 0},
-            4: {'amount': 1, 'placed': 0},
-        }
+        self.ships = [
+            {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
+            {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
+            {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
+            {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
+            {'cells': 2, 'coords': [{'x': None, 'y': None} for i in range(2)]},
+            {'cells': 2, 'coords': [{'x': None, 'y': None} for i in range(2)]},
+            {'cells': 2, 'coords': [{'x': None, 'y': None} for i in range(2)]},
+            {'cells': 3, 'coords': [{'x': None, 'y': None} for i in range(3)]},
+            {'cells': 3, 'coords': [{'x': None, 'y': None} for i in range(3)]},
+            {'cells': 4, 'coords': [{'x': None, 'y': None} for i in range(4)]},
+        ]
 
-        self.current_ship = 0
+        self.game_stages = ['placing', 'waiting', 'game', 'end']
+        self.game_stage = self.game_stages[0]
 
         self.END_FONT = pygame.font.SysFont('Comic Sans MS', 20)
 
-        self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in range(self.ROWS)]
-        pprint(self.game_field)
+        self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
+                           range(self.ROWS)]
 
     def render(self):
         self.draw_grid()
@@ -73,8 +80,6 @@ class GameClient:
 
     def handle_click(self):
         m_x, m_y = self.pygame.mouse.get_pos()
-        print(f'x: {m_x}; y: {m_y}')
-
         cell_width = self.WIDTH // self.COLUMNS
 
         x = 0
@@ -88,20 +93,49 @@ class GameClient:
         x -= 1
         y -= 1
 
-        print(f'({x};{y})')
-
         self.color_cell(x, y)
 
     def color_cell(self, x, y):
+        # {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
+        if self.game_stage == self.game_stages[0]:
+            for ship in self.ships:
+                for coord in ship['coords']:
+                    if coord['x'] is None:
+                        adding_new_ship = self.is_current_ship_new()
+                        if adding_new_ship: print('this ship is new')
+                        print(f'_____{x},{y}_____')
+                        if not self.have_neighbors(x, y,
+                                                   only_diagonal=not adding_new_ship):
+                            self.game_field[x][y]['colored'] = True
+                            coord['x'] = x
+                            coord['y'] = y
+                            # pprint(self.get_all_ships())
+                            return
+                        else:
+                            return
 
-        if self.current_ship == 0:
-            if not self.have_neighbors(x, y, only_diagonal=True):
-                self.game_field[x][y]['colored'] = True
+    def get_all_ships(self):
+        ships = []
+        for ship in self.ships:
+            for coord in ship['coords']:
+                if coord['x'] is not None:
+                    ships.append(ship)
+        return ships
+
+    def is_current_ship_new(self):
+        ships = self.get_all_ships()
+        for ship in ships:
+            if ship['cells'] > len([True for i in ship['coords'] if i['x'] is not None]):
+                return False
+        return True
 
     def have_neighbors(self, x, y, only_diagonal=False):
-        for x_n in range(x-1, x+2, 1):
-            for y_n in range(y-1, y+2, 1):
+        for x_n in range(x - 1, x + 2, 1):
+            for y_n in range(y - 1, y + 2, 1):
                 try:
+                    if x < 0 or y < 0:
+                        pass
+
                     if self.game_field[x_n][y_n]['colored']:
                         if only_diagonal:
                             if x_n != x and y_n != y:
@@ -112,6 +146,7 @@ class GameClient:
                             return True
                 except IndexError:
                     pass
+        return False
 
         # if x == 0:
         #     if only_diagonal:
@@ -121,10 +156,6 @@ class GameClient:
         #     return self.game_field[x + 1][y]['colored'] and self.game_field[x][y + 1]['colored'] and \
         #            self.game_field[x][y - 1]['colored']
 
-
-
-
-
     def events_loop(self):
         while True:
             time.sleep(0.1)
@@ -133,6 +164,7 @@ class GameClient:
                     pygame.quit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_click()
+
             self.render()
 
 
