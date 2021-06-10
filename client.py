@@ -135,6 +135,7 @@ class GameClient:
             for coord in ship['coords']:
                 if coord['x'] is not None:
                     ships.append(ship)
+                    break
         return ships
 
     def is_current_ship_new(self):
@@ -163,6 +164,16 @@ class GameClient:
                     pass
         return False
 
+    def check_game_status(self):
+        if self.game_stage == self.game_stages[0]:
+            ships = self.get_all_ships()
+            pprint(ships)
+            ships = [ship for ship in ships if len([coord for coord in ship['coords'] if coord['x'] is not None]) == ship['cells']]
+            pprint(ships)
+            if len(ships) == 4+3+2+1:
+                self.game_stage = self.game_stages[1]
+                print('new game stage:', self.game_stage)
+
         # if x == 0:
         #     if only_diagonal:
         #         return self.game_field[x + 1][y + 1]['colored']
@@ -180,6 +191,7 @@ class GameClient:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.handle_click()
 
+            self.check_game_status()
             self.render()
 
 
