@@ -114,6 +114,7 @@ class GameClient:
 
     def color_cell(self, x, y):
         if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
+            if self.game_field[x][y]['colored']: return  # игнорируем уже закрашенные
             # {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
             if self.game_stage == self.game_stages[0]:
                 for ship in self.ships:
@@ -171,6 +172,8 @@ class GameClient:
             if len(ships) == 4+3+2+1:
                 self.game_stage = self.game_stages[1]
                 print('new game stage:', self.game_stage)
+                pprint(ships)
+                self.network.init_ships_server(ships)
 
 
     def events_loop(self):

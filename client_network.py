@@ -27,3 +27,10 @@ class NetworkClient:
         except socket.error as e:
             print(e)
             return None
+
+    def init_ships_server(self, ships):
+        data = {
+            'command': 'init_ships',
+            'ships': ships,
+        }
+        return self.send(data)
