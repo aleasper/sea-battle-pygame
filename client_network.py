@@ -16,14 +16,14 @@ class NetworkClient:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            return self.client.recv(2048).decode()
+            return self.client.recv(8192).decode()
         except:
             pass
 
     def send(self, data):
         try:
             self.client.send(pickle.dumps(data))
-            return pickle.loads(self.client.recv(2048))
+            return pickle.loads(self.client.recv(8192))
         except socket.error as e:
             print(e)
             return None
@@ -40,3 +40,18 @@ class NetworkClient:
             'command': 'is_opponent_ready',
         }
         return self.send(data)
+
+    def send_hit(self, x, y):
+        data = {
+            'command': 'send_hit',
+            'x': x,
+            'y': y,
+        }
+        return self.send(data)
+
+    def get_fields(self):
+        data = {
+            'command': 'get_fields',
+        }
+        return self.send(data)
+

@@ -25,7 +25,8 @@ class Server:
                 print('Connected to: ' + address[0] + ':' + str(address[1]))
                 self.connected[address[1]] = {
                     'ready': False,
-                    'ships': []
+                    'ships': [],
+                    'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)]
                 }
                 start_new_thread(self.threaded_client, (client, thr.current_thread().ident, address[1],))
                 print(self.connected)
@@ -71,12 +72,44 @@ class Server:
             else:
                 return {'result': True, 'waiting': True}
 
+        if data['command'] == 'send_hit':
+            target_player = [self.connected[p] for p in self.connected if p != port][0]
+            x = data['x']
+            y = data['y']
+            hit = False
+            for ship in target_player['ships']:
+                for coord in ship['coords']:
+                    if coord['x'] == x and coord['y'] == y:
+                        print('HITED!!!')
+                        hit = True
+
+                        for row in target_player['field']:
+                            for field in row:
+                                if field['x'] == x and field['y'] == y:
+                                    field['colored'] = True
+
+            if not hit:
+                print('MISS')
+
+            return {'result': True}
+
+        if data['command'] == 'get_fields':
+            target_player = [self.connected[p] for p in self.connected if p != port][0]
+            return {
+                'result': True,
+                'field': self.connected[port]['field'],
+                'enemy_field': target_player['field']
+            }
+
+
+
+
 
 
     def threaded_client(self, connection, thread_id, port):
         connection.send(str(thread_id).encode())
         while True:
-            raw_data = connection.recv(2048)
+            raw_data = connection.recv(8192)
             if not raw_data:
                 print('Disconnect')
                 del self.connected[port]

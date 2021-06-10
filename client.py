@@ -46,6 +46,9 @@ class GameClient:
         self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
                            range(self.ROWS)]
 
+        self.game_field_emeny = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
+                                 range(self.ROWS)]
+
         self.network = NetworkClient()
         self.network.connect()
 
@@ -123,6 +126,14 @@ class GameClient:
             y -= 1
 
             print(x, y)
+            self.hit_emeny(x, y)
+
+    def hit_emeny(self, x, y):
+        if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
+            if self.game_field_emeny[x][y]['colored']: return  # игнорируем уже закрашенные
+
+            res = self.network.send_hit(x, y)
+            print(res)
 
     def color_cell(self, x, y):
         if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
@@ -180,8 +191,9 @@ class GameClient:
     def check_game_status(self):
         if self.game_stage == self.game_stages[0]:
             ships = self.get_all_ships()
-            ships = [ship for ship in ships if len([coord for coord in ship['coords'] if coord['x'] is not None]) == ship['cells']]
-            if len(ships) == 4+3+2+1:
+            ships = [ship for ship in ships if
+                     len([coord for coord in ship['coords'] if coord['x'] is not None]) == ship['cells']]
+            if len(ships) == 4 + 3 + 2 + 1:
                 self.game_stage = self.game_stages[1]
                 print('new game stage:', self.game_stage)
                 pprint(ships)
@@ -194,6 +206,10 @@ class GameClient:
             if not res['waiting']:
                 self.game_stage = self.game_stages[2]
                 print('GAME START!!!')
+
+        if self.game_stage == self.game_stages[2]:
+            res = self.network.get_fields()
+            self.game_field_emeny = res['enemy_field']
 
     def events_loop(self):
         while True:
