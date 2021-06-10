@@ -42,6 +42,7 @@ class Server:
 
         if data['command'] == 'reinit':
             self.reinit()
+            return {'result': True}
 
         if data['command'] == 'init_ships':
             self.connected[port]['ships'] = data['ships']
@@ -51,7 +52,26 @@ class Server:
             for player_port in self.connected:
                 if not self.connected[player_port]['ready']:
                     players_ready = False
-            print('Players are ready: ', players_ready)
+
+            if players_ready:
+                print('Players are ready')
+                return {'result': True, 'waiting': False}
+            else:
+                return {'result': True, 'waiting': True}
+
+        if data['command'] == 'is_opponent_ready':
+            players_ready = True
+            for player_port in self.connected:
+                if not self.connected[player_port]['ready']:
+                    players_ready = False
+
+            if players_ready:
+                print('Players are ready')
+                return {'result': True, 'waiting': False}
+            else:
+                return {'result': True, 'waiting': True}
+
+
 
     def threaded_client(self, connection, thread_id, port):
         connection.send(str(thread_id).encode())

@@ -98,19 +98,31 @@ class GameClient:
     def handle_click(self):
         m_x, m_y = self.pygame.mouse.get_pos()
         cell_width = self.WIDTH // self.COLUMNS
+        if self.game_stage == self.game_stages[0]:  # закраска своего поля
+            x = 0
+            while m_x > x * cell_width:
+                x += 1
 
-        x = 0
-        while m_x > x * cell_width:
-            x += 1
+            y = 0
+            while m_y > y * cell_width + self.HEIGHT - self.WIDTH:
+                y += 1
 
-        y = 0
-        while m_y > y * cell_width + self.HEIGHT - self.WIDTH:
-            y += 1
+            x -= 1
+            y -= 1
 
-        x -= 1
-        y -= 1
+            self.color_cell(x, y)
 
-        self.color_cell(x, y)
+        if self.game_stage == self.game_stages[2]:  # лупим противника
+            x = 0
+            while m_x > x * cell_width + self.WIDTH + self.SPACER:
+                x += 1
+            y = 0
+            while m_y > y * cell_width + self.HEIGHT - self.WIDTH:
+                y += 1
+            x -= 1
+            y -= 1
+
+            print(x, y)
 
     def color_cell(self, x, y):
         if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
@@ -173,8 +185,15 @@ class GameClient:
                 self.game_stage = self.game_stages[1]
                 print('new game stage:', self.game_stage)
                 pprint(ships)
-                self.network.init_ships_server(ships)
-
+                res = self.network.init_ships_server(ships)
+                if not res['waiting']:
+                    self.game_stage = self.game_stages[2]
+                    print('GAME START!!!')
+        if self.game_stage == self.game_stages[1]:
+            res = self.network.is_opponent_ready()
+            if not res['waiting']:
+                self.game_stage = self.game_stages[2]
+                print('GAME START!!!')
 
     def events_loop(self):
         while True:

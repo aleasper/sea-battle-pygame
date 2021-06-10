@@ -34,3 +34,9 @@ class NetworkClient:
             'ships': ships,
         }
         return self.send(data)
+
+    def is_opponent_ready(self):
+        data = {
+            'command': 'is_opponent_ready',
+        }
+        return self.send(data)
