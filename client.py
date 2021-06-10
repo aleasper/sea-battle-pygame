@@ -46,6 +46,9 @@ class GameClient:
         self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
                            range(self.ROWS)]
 
+        self.network = NetworkClient()
+        self.network.connect()
+
     def render(self):
         self.draw_grid()
         self.draw_cells()
@@ -117,14 +120,11 @@ class GameClient:
                     for coord in ship['coords']:
                         if coord['x'] is None:
                             adding_new_ship = self.is_current_ship_new()
-                            if adding_new_ship: print('this ship is new')
-                            print(f'_____{x},{y}_____')
                             if not self.have_neighbors(x, y,
                                                        only_diagonal=not adding_new_ship):
                                 self.game_field[x][y]['colored'] = True
                                 coord['x'] = x
                                 coord['y'] = y
-                                # pprint(self.get_all_ships())
                                 return
                             else:
                                 return
@@ -167,20 +167,11 @@ class GameClient:
     def check_game_status(self):
         if self.game_stage == self.game_stages[0]:
             ships = self.get_all_ships()
-            pprint(ships)
             ships = [ship for ship in ships if len([coord for coord in ship['coords'] if coord['x'] is not None]) == ship['cells']]
-            pprint(ships)
             if len(ships) == 4+3+2+1:
                 self.game_stage = self.game_stages[1]
                 print('new game stage:', self.game_stage)
 
-        # if x == 0:
-        #     if only_diagonal:
-        #         return self.game_field[x + 1][y + 1]['colored']
-        #     if y == 0:
-        #         return self.game_field[x + 1][y]['colored'] and self.game_field[x][y + 1]['colored']
-        #     return self.game_field[x + 1][y]['colored'] and self.game_field[x][y + 1]['colored'] and \
-        #            self.game_field[x][y - 1]['colored']
 
     def events_loop(self):
         while True:

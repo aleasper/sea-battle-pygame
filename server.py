@@ -13,6 +13,8 @@ class Server:
         self.HOST = HOST
         self.PORT = int(PORT)
         self.server_socket = socket.socket()
+
+        self.connected = {}
         try:
             self.server_socket.bind((self.HOST, self.PORT))
 
@@ -21,8 +23,9 @@ class Server:
             while True:
                 client, address = self.server_socket.accept()
                 print('Connected to: ' + address[0] + ':' + str(address[1]))
-                start_new_thread(self.threaded_client, (client, thr.current_thread().ident,))
-
+                self.connected[address[1]] = {}
+                start_new_thread(self.threaded_client, (client, thr.current_thread().ident, address[1],))
+                print(self.connected)
             self.server_socket.close()
         except socket.error as e:
             print(str(e))
@@ -37,12 +40,14 @@ class Server:
         if data['command'] == 'reinit':
             self.reinit()
 
-    def threaded_client(self, connection, thread_id):
+    def threaded_client(self, connection, thread_id, port):
         connection.send(str(thread_id).encode())
         while True:
             raw_data = connection.recv(2048)
             if not raw_data:
                 print('Disconnect')
+                del self.connected[port]
+                print(self.connected)
                 break
             data = pickle.loads(raw_data)
             res = self.handle_data(data)
