@@ -46,7 +46,7 @@ class GameClient:
         self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
                            range(self.ROWS)]
 
-        self.game_field_emeny = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
+        self.game_field_enemy = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
                                  range(self.ROWS)]
 
         self.network = NetworkClient()
@@ -98,6 +98,15 @@ class GameClient:
                                            cell_width,
                                            cell_width])
 
+        for y, col in enumerate(self.game_field_enemy):
+            for x, cell in enumerate(col):
+                if cell['colored']:
+                    cell_width = self.WIDTH // self.COLUMNS
+                    self.pygame.draw.rect(self.win, GRAY,
+                                          [self.WIDTH + self.SPACER + cell_width * x, self.HEIGHT - self.WIDTH + cell_width * y,
+                                           cell_width,
+                                           cell_width])
+
     def handle_click(self):
         m_x, m_y = self.pygame.mouse.get_pos()
         cell_width = self.WIDTH // self.COLUMNS
@@ -129,8 +138,12 @@ class GameClient:
             self.hit_emeny(x, y)
 
     def hit_emeny(self, x, y):
+        print('hit', x, y)
         if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
-            if self.game_field_emeny[x][y]['colored']: return  # игнорируем уже закрашенные
+            if self.game_field_enemy[y][x]['colored']:
+                print(x, y, 'already colored')
+                print(self.game_field_enemy[x])
+                return  # игнорируем уже закрашенные
 
             res = self.network.send_hit(x, y)
             print(res)
@@ -209,7 +222,7 @@ class GameClient:
 
         if self.game_stage == self.game_stages[2]:
             res = self.network.get_fields()
-            self.game_field_emeny = res['enemy_field']
+            self.game_field_enemy = res['enemy_field']
 
     def events_loop(self):
         while True:

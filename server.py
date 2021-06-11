@@ -91,10 +91,18 @@ class Server:
             if not hit:
                 print('MISS')
 
-            return {'result': True}
+            return {'result': True, 'hit': hit}
 
         if data['command'] == 'get_fields':
-            target_player = [self.connected[p] for p in self.connected if p != port][0]
+            target_player = {}
+            try:
+                target_player = [self.connected[p] for p in self.connected if p != port][0]
+            except:
+                target_player = {
+                    'ready': False,
+                    'ships': [],
+                    'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)]
+                }
             return {
                 'result': True,
                 'field': self.connected[port]['field'],
