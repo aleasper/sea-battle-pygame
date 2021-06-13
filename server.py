@@ -16,6 +16,7 @@ class Server:
         self.server_socket = socket.socket()
 
         self.connected = {}
+        self.winner = None
         try:
             self.server_socket.bind((self.HOST, self.PORT))
 
@@ -80,7 +81,7 @@ class Server:
                 return {'result': True, 'waiting': True}
 
         if data['command'] == 'send_hit':
-
+            end_game = False
             target_player = [self.connected[p] for p in self.connected if p != port][0]
             if self.connected[port]['move']:
                 x_new = data['x']
@@ -108,9 +109,18 @@ class Server:
                     self.connected[port]['move'] = False
                     target_player['move'] = True
 
-                return {'result': True, 'hit': hit}
+                counter = 0
+                for x, col in enumerate(target_player['field']):
+                    for y, cell in enumerate(col):
+                        if cell['hit']:
+                            counter += 1
+                if counter == 20:
+                    self.winner = port
+                    end_game = True
 
-            return {'result': False}
+                return {'result': True, 'hit': hit, 'end_game': end_game}
+
+            return {'result': False, 'end_game': end_game}
 
         if data['command'] == 'get_fields':
             target_player = {}
@@ -122,11 +132,15 @@ class Server:
                     'ships': [],
                     'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)]
                 }
+            winner = None
+            if self.winner is not None:
+                winner = self.winner == port
 
             return {
                 'result': True,
                 'field': self.connected[port]['field'],
                 'enemy_field': self.connected[port]['enemy_fields'],
+                'winner': winner,
             }
 
         if data['command'] == 'is_my_turn':

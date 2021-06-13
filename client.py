@@ -27,7 +27,7 @@ class GameClient:
         self.pygame.init()
         self.win = self.pygame.display.set_mode((self.WIN_WIDTH, self.HEIGHT))
         self.win.fill(WHITE)
-
+        self.winner = None
         self.ships = [
             {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
             {'cells': 1, 'coords': [{'x': None, 'y': None} for i in range(1)]},
@@ -115,6 +115,11 @@ class GameClient:
             textsurface = self.END_FONT.render(text, False, GREEN)
             self.win.blit(textsurface, (10, 10))
 
+        if self.game_stage == self.game_stages[3]:
+            text = 'Вы победитель!' if self.winner else 'Вы проиграли'
+            textsurface = self.END_FONT.render(text, False, BLACK)
+            self.win.blit(textsurface, (10, 10))
+
     def draw_cells(self):
         cell_width = self.WIDTH // self.COLUMNS
 
@@ -128,7 +133,7 @@ class GameClient:
                 if cell['colored'] and cell['hit']:
                     color = RED
                 elif cell['hit']:
-                    color = BLUE
+                    color = GRAY
                 elif cell['colored'] and not cell['hit']:
                     color = GREEN
                 if color is not None:
@@ -278,6 +283,10 @@ class GameClient:
             res = self.network.get_fields()
             self.game_field_enemy = res['enemy_field']
             self.game_field = res['field']
+
+            self.winner = res['winner']
+            if self.winner is not None:
+                self.game_stage = self.game_stages[3]
 
 
     @staticmethod
