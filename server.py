@@ -8,6 +8,7 @@ import math
 
 from pprint import pprint
 
+
 class Server:
     def __init__(self):
         self.HOST = HOST
@@ -25,8 +26,10 @@ class Server:
                 print('Connected to: ' + address[0] + ':' + str(address[1]))
                 self.connected[address[1]] = {
                     'ready': False,
-                    'ships': [],
-                    'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)],
+                    'field': [[{'x': col, 'y': row, 'colored': False, 'hit': False} for col in range(10)] for row in
+                              range(10)],
+                    'enemy_fields': [[{'x': col, 'y': row, 'colored': False, 'hit': False} for col in range(10)] for row
+                                     in range(10)],
                     'move': False
                 }
                 start_new_thread(self.threaded_client, (client, thr.current_thread().ident, address[1],))
@@ -47,7 +50,7 @@ class Server:
             return {'result': True}
 
         if data['command'] == 'init_ships':
-            self.connected[port]['ships'] = data['ships']
+            self.connected[port]['field'] = data['game_field']
             self.connected[port]['ready'] = True
 
             players_ready = True
@@ -77,21 +80,28 @@ class Server:
                 return {'result': True, 'waiting': True}
 
         if data['command'] == 'send_hit':
+
             target_player = [self.connected[p] for p in self.connected if p != port][0]
             if self.connected[port]['move']:
-                x = data['x']
-                y = data['y']
+                x_new = data['x']
+                y_new = data['y']
+                print('SEND HIT', x_new, y_new)
                 hit = False
-                for ship in target_player['ships']:
-                    for coord in ship['coords']:
-                        if coord['x'] == x and coord['y'] == y:
-                            print('HITED!!!')
-                            hit = True
+                for x, col in enumerate(target_player['field']):
+                    for y, cell in enumerate(col):
+                        if x_new == x and y_new == y:
+                            if cell['colored']:
+                                hit = True
+                                cell['hit'] = True
+                            else:
+                                cell['hit'] = True
 
-                        for row in target_player['field']:
-                            for field in row:
-                                if field['x'] == x and field['y'] == y:
-                                    field['colored'] = True
+                for x, col in enumerate(self.connected[port]['enemy_fields']):
+                    for y, cell in enumerate(col):
+                        if x_new == x and y_new == y:
+                            print(cell)
+                            cell['colored'] = True
+                            cell['hit'] = hit
 
                 if not hit:
                     print('MISS')
@@ -112,26 +122,20 @@ class Server:
                     'ships': [],
                     'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)]
                 }
+
             return {
                 'result': True,
                 'field': self.connected[port]['field'],
-                'enemy_field': target_player['field'],
-                'enemy_ships': target_player['ships'],
+                'enemy_field': self.connected[port]['enemy_fields'],
             }
 
         if data['command'] == 'is_my_turn':
             return {'status': True, 'move': self.connected[port]['move']}
 
-
-
-
-
-
-
     def threaded_client(self, connection, thread_id, port):
         connection.send(str(thread_id).encode())
         while True:
-            raw_data = connection.recv(8192)
+            raw_data = connection.recv(16384)
             if not raw_data:
                 print('Disconnect')
                 del self.connected[port]

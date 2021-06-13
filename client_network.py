@@ -16,22 +16,23 @@ class NetworkClient:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            return self.client.recv(8192).decode()
+            return self.client.recv(16384).decode()
         except:
             pass
 
     def send(self, data):
         try:
             self.client.send(pickle.dumps(data))
-            return pickle.loads(self.client.recv(8192))
+            return pickle.loads(self.client.recv(16384))
         except socket.error as e:
             print(e)
             return None
 
-    def init_ships_server(self, ships):
+    def init_ships_server(self, ships, game_field):
         data = {
             'command': 'init_ships',
             'ships': ships,
+            'game_field': game_field
         }
         return self.send(data)
 

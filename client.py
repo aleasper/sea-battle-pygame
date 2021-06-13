@@ -41,12 +41,14 @@ class GameClient:
             {'cells': 4, 'coords': [{'x': None, 'y': None} for i in range(4)]},
         ]
 
+        self.enemy_ships = []
+
         self.game_stages = ['placing', 'waiting', 'game', 'end']
         self.game_stage = self.game_stages[0]
 
         self.END_FONT = pygame.font.SysFont('Comic Sans MS', 20)
 
-        self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
+        self.game_field = [[{'x': col, 'y': row, 'colored': False, 'hit': False} for col in range(self.COLUMNS)] for row in
                            range(self.ROWS)]
 
         self.game_field_enemy = [[{'x': col, 'y': row, 'colored': False, 'hit': False} for col in range(self.COLUMNS)] for row in
@@ -114,23 +116,39 @@ class GameClient:
             self.win.blit(textsurface, (10, 10))
 
     def draw_cells(self):
+        cell_width = self.WIDTH // self.COLUMNS
+
         for x, col in enumerate(self.game_field):
             for y, cell in enumerate(col):
-                if cell['colored']:
-                    cell_width = self.WIDTH // self.COLUMNS
-                    self.pygame.draw.rect(self.win, GREEN,
-                                          [cell_width * x, self.HEIGHT - self.WIDTH + cell_width * y,
-                                           cell_width,
-                                           cell_width])
 
-        for y, col in enumerate(self.game_field_enemy):
-            for x, cell in enumerate(col):
+                color = None
                 if cell['colored']:
-                    cell_width = self.WIDTH // self.COLUMNS
-                    self.pygame.draw.rect(self.win, RED if cell['hit'] else GRAY,
-                                          [self.WIDTH + self.SPACER + cell_width * x, self.HEIGHT - self.WIDTH + cell_width * y,
-                                           cell_width,
-                                           cell_width])
+                    pprint(cell)
+
+                if cell['colored'] and cell['hit']:
+                    color = RED
+                elif cell['hit']:
+                    color = BLUE
+                elif cell['colored'] and not cell['hit']:
+                    color = GREEN
+                if color is not None:
+                    # print('draw in my field')
+                    self.pygame.draw.rect(self.win, color,
+                                          [cell_width * x + 2, self.HEIGHT - self.WIDTH + cell_width * y + 2,
+                                           cell_width - 2,
+                                           cell_width - 2])
+
+        for x, col in enumerate(self.game_field_enemy):
+            for y, cell in enumerate(col):
+                if cell['colored']:
+                    color = GRAY
+                    if cell['hit']:
+                        color = RED
+                    self.pygame.draw.rect(self.win, color,
+                                          [self.WIDTH + self.SPACER + cell_width * x + 2, self.HEIGHT - self.WIDTH + cell_width * y + 2,
+                                           cell_width - 2,
+                                           cell_width - 2])
+
 
     def handle_click(self):
         m_x, m_y = self.pygame.mouse.get_pos()
@@ -165,7 +183,7 @@ class GameClient:
     def hit_emeny(self, x, y):
         print('hit', x, y)
         if 0 <= x < self.COLUMNS and 0 <= y < self.COLUMNS:
-            if self.game_field_enemy[y][x]['colored']:
+            if self.game_field_enemy[x][y]['colored']:
                 print(x, y, 'already colored')
                 print(self.game_field_enemy[x])
                 return  # игнорируем уже закрашенные
@@ -245,7 +263,7 @@ class GameClient:
                 self.game_stage = self.game_stages[1]
                 print('new game stage:', self.game_stage)
                 pprint(ships)
-                res = self.network.init_ships_server(ships)
+                res = self.network.init_ships_server(ships, self.game_field)
                 if not res['waiting']:
                     self.game_stage = self.game_stages[2]
                     print('GAME START!!!')
@@ -258,12 +276,8 @@ class GameClient:
 
         if self.game_stage == self.game_stages[2]:
             res = self.network.get_fields()
-            self.game_field_enemy = [[{
-                'x': el['x'],
-                'y': el['y'],
-                'colored': el['colored'],
-                'hit': self.is_hited_by_coord(res['enemy_ships'], el['x'], el['y'])
-            } for el in line] for line in res['enemy_field']]
+            self.game_field_enemy = res['enemy_field']
+            self.game_field = res['field']
 
 
     @staticmethod
@@ -275,8 +289,14 @@ class GameClient:
 
         return False
 
+    @staticmethod
+    def is_ships_coord(ships, x, y):
+        for ship in ships:
+            for coord in ship['coords']:
+                if coord['x'] == x and coord['y'] == y:
+                    return True
 
-
+        return False
 
     def events_loop(self):
         while True:
