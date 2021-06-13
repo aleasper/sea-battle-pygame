@@ -82,7 +82,7 @@ class GameClient:
                                   (self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH), 3)  # горизонтальные
             if i != 10:
                 textABC = self.END_FONT.render(f'{chars[i]}', False, GRAY)
-                textNums = self.END_FONT.render(f'{i}', False, GRAY)
+                textNums = self.END_FONT.render(f'{i + 1}', False, GRAY)
                 self.win.blit(textABC, (x + cell_width/ 2 - 10 + self.SPACER, self.HEIGHT - self.WIDTH - self.SPACER))
                 self.win.blit(textNums, (self.SPACER / 2, self.SPACER * 2 + i * cell_width))
 
@@ -99,7 +99,7 @@ class GameClient:
 
             if i != 10:
                 textABC = self.END_FONT.render(f'{chars[i]}', False, GRAY)
-                textNums = self.END_FONT.render(f'{i}', False, GRAY)
+                textNums = self.END_FONT.render(f'{i + 1}', False, GRAY)
                 self.win.blit(textABC, (x + cell_width/ 2 - 10 + self.SPACER + (self.WIDTH + self.SPACER), self.HEIGHT - self.WIDTH - self.SPACER))
                 self.win.blit(textNums, (self.SPACER / 2 + (self.WIDTH + self.SPACER), self.SPACER * 2 + i * cell_width))
 
