@@ -18,7 +18,7 @@ class GameClient:
 
         self.WIDTH = 500
         self.SPACER = 50
-        self.WIN_WIDTH = self.WIDTH * 2 + self.SPACER
+        self.WIN_WIDTH = self.WIDTH * 2 + self.SPACER * 2
         self.HEIGHT = 600
         self.ROWS = 10
         self.COLUMNS = self.ROWS
@@ -70,30 +70,38 @@ class GameClient:
         x = 0
         y = 0
         x_pos = 0
+        chars = ['A', 'Б', 'Г', 'Д', 'Е', 'Ё', 'Ж', 'З', 'И', 'К', 'Л']
+        for i in range(self.ROWS + 1):
+            x = i * cell_width
+
+            self.pygame.draw.line(self.win, GRAY,
+                                  (x + self.SPACER, self.HEIGHT - self.WIDTH),
+                                  (x + self.SPACER, self.HEIGHT), 3)  # вертикальные линии
+            self.pygame.draw.line(self.win, GRAY,
+                                  (0 + self.SPACER, x + self.HEIGHT - self.WIDTH),
+                                  (self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH), 3)  # горизонтальные
+            if i != 10:
+                textABC = self.END_FONT.render(f'{chars[i]}', False, GRAY)
+                textNums = self.END_FONT.render(f'{i}', False, GRAY)
+                self.win.blit(textABC, (x + cell_width/ 2 - 10 + self.SPACER, self.HEIGHT - self.WIDTH - self.SPACER))
+                self.win.blit(textNums, (self.SPACER / 2, self.SPACER * 2 + i * cell_width))
 
         for i in range(self.ROWS):
             x = i * cell_width
 
             self.pygame.draw.line(self.win, GRAY,
-                                  (x, self.HEIGHT - self.WIDTH),
-                                  (x, self.HEIGHT), 3)  # вертикальные линии
+                                  (x + self.WIDTH + self.SPACER * 2, self.HEIGHT - self.WIDTH),
+                                  (x + self.WIDTH + self.SPACER * 2, self.HEIGHT), 3)  # вертикальные линии
             self.pygame.draw.line(self.win, GRAY,
-                                  (0, x + self.HEIGHT - self.WIDTH),
-                                  (self.WIDTH, x + self.HEIGHT - self.WIDTH), 3)  # горизонтальные
-
-            text = self.END_FONT.render(f'({x_pos};{i})', False, GRAY)
-            self.win.blit(text, (x, self.HEIGHT - self.WIDTH))
-
-        for i in range(self.ROWS):
-            x = i * cell_width
-
-            self.pygame.draw.line(self.win, GRAY,
-                                  (x + self.WIDTH + self.SPACER, self.HEIGHT - self.WIDTH),
-                                  (x + self.WIDTH + self.SPACER, self.HEIGHT), 3)  # вертикальные линии
-            self.pygame.draw.line(self.win, GRAY,
-                                  (0 + self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH),
-                                  (self.WIDTH + self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH),
+                                  (0 + self.WIDTH + self.SPACER * 2, x + self.HEIGHT - self.WIDTH),
+                                  (self.WIDTH + self.WIDTH + self.SPACER * 2, x + self.HEIGHT - self.WIDTH),
                                   3)  # горизонтальные
+
+            if i != 10:
+                textABC = self.END_FONT.render(f'{chars[i]}', False, GRAY)
+                textNums = self.END_FONT.render(f'{i}', False, GRAY)
+                self.win.blit(textABC, (x + cell_width/ 2 - 10 + self.SPACER + (self.WIDTH + self.SPACER), self.HEIGHT - self.WIDTH - self.SPACER))
+                self.win.blit(textNums, (self.SPACER / 2 + (self.WIDTH + self.SPACER), self.SPACER * 2 + i * cell_width))
 
     def show_game_info(self):
         if self.game_stage == self.game_stages[0]:
@@ -139,7 +147,7 @@ class GameClient:
                 if color is not None:
                     # print('draw in my field')
                     self.pygame.draw.rect(self.win, color,
-                                          [cell_width * x + 2, self.HEIGHT - self.WIDTH + cell_width * y + 2,
+                                          [cell_width * x + 2 + self.SPACER, self.HEIGHT - self.WIDTH + cell_width * y + 2,
                                            cell_width - 2,
                                            cell_width - 2])
 
@@ -150,7 +158,7 @@ class GameClient:
                     if cell['hit']:
                         color = RED
                     self.pygame.draw.rect(self.win, color,
-                                          [self.WIDTH + self.SPACER + cell_width * x + 2, self.HEIGHT - self.WIDTH + cell_width * y + 2,
+                                          [self.WIDTH + self.SPACER * 2 + cell_width * x + 2, self.HEIGHT - self.WIDTH + cell_width * y + 2,
                                            cell_width - 2,
                                            cell_width - 2])
 
@@ -160,7 +168,7 @@ class GameClient:
         cell_width = self.WIDTH // self.COLUMNS
         if self.game_stage == self.game_stages[0]:  # закраска своего поля
             x = 0
-            while m_x > x * cell_width:
+            while m_x > x * cell_width + self.SPACER:
                 x += 1
 
             y = 0
@@ -174,7 +182,7 @@ class GameClient:
 
         if self.game_stage == self.game_stages[2]:  # лупим противника
             x = 0
-            while m_x > x * cell_width + self.WIDTH + self.SPACER:
+            while m_x > x * cell_width + self.WIDTH + self.SPACER + self.SPACER:
                 x += 1
             y = 0
             while m_y > y * cell_width + self.HEIGHT - self.WIDTH:
