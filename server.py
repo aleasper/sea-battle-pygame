@@ -26,7 +26,8 @@ class Server:
                 self.connected[address[1]] = {
                     'ready': False,
                     'ships': [],
-                    'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)]
+                    'field': [[{'x': col, 'y': row, 'colored': False} for col in range(10)] for row in range(10)],
+                    'move': False
                 }
                 start_new_thread(self.threaded_client, (client, thr.current_thread().ident, address[1],))
                 print(self.connected)
@@ -54,6 +55,9 @@ class Server:
                 if not self.connected[player_port]['ready']:
                     players_ready = False
 
+            if not players_ready:
+                self.connected[port]['move'] = True
+
             if players_ready:
                 print('Players are ready')
                 return {'result': True, 'waiting': False}
@@ -74,24 +78,29 @@ class Server:
 
         if data['command'] == 'send_hit':
             target_player = [self.connected[p] for p in self.connected if p != port][0]
-            x = data['x']
-            y = data['y']
-            hit = False
-            for ship in target_player['ships']:
-                for coord in ship['coords']:
-                    if coord['x'] == x and coord['y'] == y:
-                        print('HITED!!!')
-                        hit = True
+            if self.connected[port]['move']:
+                x = data['x']
+                y = data['y']
+                hit = False
+                for ship in target_player['ships']:
+                    for coord in ship['coords']:
+                        if coord['x'] == x and coord['y'] == y:
+                            print('HITED!!!')
+                            hit = True
 
-                    for row in target_player['field']:
-                        for field in row:
-                            if field['x'] == x and field['y'] == y:
-                                field['colored'] = True
+                        for row in target_player['field']:
+                            for field in row:
+                                if field['x'] == x and field['y'] == y:
+                                    field['colored'] = True
 
-            if not hit:
-                print('MISS')
+                if not hit:
+                    print('MISS')
+                    self.connected[port]['move'] = False
+                    target_player['move'] = True
 
-            return {'result': True, 'hit': hit}
+                return {'result': True, 'hit': hit}
+
+            return {'result': False}
 
         if data['command'] == 'get_fields':
             target_player = {}
@@ -109,6 +118,10 @@ class Server:
                 'enemy_field': target_player['field'],
                 'enemy_ships': target_player['ships'],
             }
+
+        if data['command'] == 'is_my_turn':
+            return {'status': True, 'move': self.connected[port]['move']}
+
 
 
 

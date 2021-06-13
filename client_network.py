@@ -55,3 +55,9 @@ class NetworkClient:
         }
         return self.send(data)
 
+    def is_my_turn(self):
+        data = {
+            'command': 'is_my_turn'
+        }
+        return self.send(data)
+

@@ -106,7 +106,10 @@ class GameClient:
             self.win.blit(textsurface, (10, 10))
 
         if self.game_stage == self.game_stages[2]:
-            text = f'Ваш ход'
+            if self.network.is_my_turn()['move']:
+                text = f'Ваш ход'
+            else:
+                text = 'Ожидание хода второго игрока'
             textsurface = self.END_FONT.render(text, False, GREEN)
             self.win.blit(textsurface, (10, 10))
 
