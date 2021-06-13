@@ -83,10 +83,10 @@ class Server:
                         print('HITED!!!')
                         hit = True
 
-                        for row in target_player['field']:
-                            for field in row:
-                                if field['x'] == x and field['y'] == y:
-                                    field['colored'] = True
+                    for row in target_player['field']:
+                        for field in row:
+                            if field['x'] == x and field['y'] == y:
+                                field['colored'] = True
 
             if not hit:
                 print('MISS')
@@ -106,7 +106,8 @@ class Server:
             return {
                 'result': True,
                 'field': self.connected[port]['field'],
-                'enemy_field': target_player['field']
+                'enemy_field': target_player['field'],
+                'enemy_ships': target_player['ships'],
             }
 
 

@@ -6,8 +6,11 @@ import pickle
 from pprint import pprint
 
 GRAY = (200, 200, 200)
+BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 
 
 class GameClient:
@@ -46,7 +49,7 @@ class GameClient:
         self.game_field = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
                            range(self.ROWS)]
 
-        self.game_field_enemy = [[{'x': col, 'y': row, 'colored': False} for col in range(self.COLUMNS)] for row in
+        self.game_field_enemy = [[{'x': col, 'y': row, 'colored': False, 'hit': False} for col in range(self.COLUMNS)] for row in
                                  range(self.ROWS)]
 
         self.network = NetworkClient()
@@ -55,7 +58,9 @@ class GameClient:
     def render(self):
         self.draw_grid()
         self.draw_cells()
+        self.show_game_info()
         self.pygame.display.update()
+
 
     def draw_grid(self):
         self.win.fill(WHITE)
@@ -88,12 +93,29 @@ class GameClient:
                                   (self.WIDTH + self.WIDTH + self.SPACER, x + self.HEIGHT - self.WIDTH),
                                   3)  # горизонтальные
 
+    def show_game_info(self):
+        if self.game_stage == self.game_stages[0]:
+            ship = self.get_current_empty_ship()
+            if ship is not None:
+                text = f'Расположите корабль с {ship["cells"]} палубами'
+                textsurface = self.END_FONT.render(text, False, BLACK)
+                self.win.blit(textsurface, (10, 10))
+        if self.game_stage == self.game_stages[1]:
+            text = f'Ожидание второго игрока'
+            textsurface = self.END_FONT.render(text, False, BLACK)
+            self.win.blit(textsurface, (10, 10))
+
+        if self.game_stage == self.game_stages[2]:
+            text = f'Ваш ход'
+            textsurface = self.END_FONT.render(text, False, GREEN)
+            self.win.blit(textsurface, (10, 10))
+
     def draw_cells(self):
         for x, col in enumerate(self.game_field):
             for y, cell in enumerate(col):
                 if cell['colored']:
                     cell_width = self.WIDTH // self.COLUMNS
-                    self.pygame.draw.rect(self.win, RED,
+                    self.pygame.draw.rect(self.win, GREEN,
                                           [cell_width * x, self.HEIGHT - self.WIDTH + cell_width * y,
                                            cell_width,
                                            cell_width])
@@ -102,7 +124,7 @@ class GameClient:
             for x, cell in enumerate(col):
                 if cell['colored']:
                     cell_width = self.WIDTH // self.COLUMNS
-                    self.pygame.draw.rect(self.win, GRAY,
+                    self.pygame.draw.rect(self.win, RED if cell['hit'] else GRAY,
                                           [self.WIDTH + self.SPACER + cell_width * x, self.HEIGHT - self.WIDTH + cell_width * y,
                                            cell_width,
                                            cell_width])
@@ -166,6 +188,16 @@ class GameClient:
                             else:
                                 return
 
+    def get_current_empty_ship(self):
+        for ship in self.ships:
+            empty = False
+            for coord in ship['coords']:
+                if coord['x'] is None:
+                    empty = True
+            if empty:
+                return ship
+        return None
+
     def get_all_ships(self):
         ships = []
         for ship in self.ships:
@@ -214,6 +246,7 @@ class GameClient:
                 if not res['waiting']:
                     self.game_stage = self.game_stages[2]
                     print('GAME START!!!')
+
         if self.game_stage == self.game_stages[1]:
             res = self.network.is_opponent_ready()
             if not res['waiting']:
@@ -222,7 +255,25 @@ class GameClient:
 
         if self.game_stage == self.game_stages[2]:
             res = self.network.get_fields()
-            self.game_field_enemy = res['enemy_field']
+            self.game_field_enemy = [[{
+                'x': el['x'],
+                'y': el['y'],
+                'colored': el['colored'],
+                'hit': self.is_hited_by_coord(res['enemy_ships'], el['x'], el['y'])
+            } for el in line] for line in res['enemy_field']]
+
+
+    @staticmethod
+    def is_hited_by_coord(ships, x, y):
+        for ship in ships:
+            for coord in ship['coords']:
+                if coord['x'] == x and coord['y'] == y:
+                    return True
+
+        return False
+
+
+
 
     def events_loop(self):
         while True:
